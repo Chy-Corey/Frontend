@@ -155,7 +155,17 @@ app.component('TodoDeleteButton', TodoDeleteButton)
 
 vue 应用还暴露了很多的方法和属性，后面会学习到。
 
+#### 5. 使用脚手架
 
+```shell
+npm create vue@latest
+```
+
+```shell
+npm init vue@latest
+```
+
+两者皆可
 
 ### 二、模板语法
 
@@ -946,20 +956,22 @@ watch(question, async (newQuestion, oldQuestion) => {
 `watch` 只有浅层监听，不会监听对象的属性：
 
 ```js
-const obj = reactive({ count: 0 })
-
-// 错误，因为 watch() 得到的参数是一个 number
-watch(obj.count, (count) => {
-  console.log(`count is: ${count}`)
-})
-```
-
-```js
 const obj = ref({ count: 0 })
 
 // 无效，因为 watch() 只监听了 obj 本身(指针)，没有监听内部
 watch(obj, (newValue, oldValue) => {
   console.log(newValue)
+})
+```
+
+`watch` 监听的是**响应式数据源**，要注意 `reactive` 对象的属性会自动解包。
+
+```js
+const obj = reactive({ count: 0 })
+
+// 错误，因为 watch() 得到的参数是一个 number
+watch(obj.count, (count) => {
+  console.log(`count is: ${count}`)
 })
 ```
 
@@ -986,6 +998,13 @@ watch(obj, (newValue, oldValue) => {
   }
 )
 ```
+
+综上，`watch` 接收的第一个参数可以是：
+
+- 一个函数，返回一个值
+- 一个 ref
+- 一个响应式对象
+- ...或是由以上类型的值组成的数组
 
 #### 2. 即时回调
 
@@ -1109,7 +1128,129 @@ watchEffect(() => {
 })
 ```
 
+#### 7. 副作用清理
 
+`watch` 的第二个参数（回调函数）不仅有两个值：监听源的新值和旧值，还可以有第三个：一个用于注册副作用清理的回调函数。该回调函数会在副作用下一次重新执行前调用，可以用来清除无效的副作用，例如等待中的异步请求。
+
+这个第三个参数如果没有用过就不知道有什么作用，这里举一个例子：
+
+> 一个可搜索的下拉选择器，用户第一次进行搜索的时候网速比较慢，请求虽然被服务端正确响应了，但是数据一直没有传输到客户端，用户看下拉数据没变化 就第二次搜索。第二次搜索之后网速恢复正常了，第二次请求的数据很快就客户端接收且正确渲染；紧接着第一次的数据也被客户端接收且客户端正确渲染。
+> 这样就可能存在这样一种情况，第一次请求，服务端响应了请求但数据还没被客户端接收的时候，有人修改了数据；然后用户又点击刷新，响应数据 很快被客户端接收且处理，这个时候已经渲染的是最新的数据了。但是第一次请求的响应数据被客户端接收了，如果渲染的话，就不是最新的数据了。 因为第二次请求被成功处理后，第一次的请求就已经属于过期的了。
+
+如果不使用第三个参数，代码是这样：
+
+```js
+// 下拉选择器绑定的数据
+const queryParams = reactive({
+    keyword: ''
+})
+
+// 下拉列表渲染的数据
+const listData = []
+
+// 第几次搜索
+let askNum = 0
+
+// 每次搜索用的事件
+const times = [5000, 100] // 第一次一共用了5s   第二次用了0.1s
+
+// 监视书的信息
+watch(queryParams, async (newV) => {
+  // 3.查询参数第一次发生变化，响应很慢需要5s
+  // 6.查询参数第二次发生变化，响应非常快
+
+  asyncTaskIsExpired(times[askNum++], askNum)
+    .then(() => {
+      console.log(`第${askNum}个任务执行完毕`)
+      // 渲染列表数据
+      renderSelectData()
+    })
+})
+
+/*
+ * @param time // 任务需要的时间
+ * @param count // 第几个任务
+ */
+function asyncTaskIsExpired(time, count) {
+  return new Promise((resolve) => {
+    console.log(`第${count}个任务开始了`)
+    setTimeout(() => {
+      resolve()
+    }, time)
+  })
+}
+
+const changeParams = function (str) {
+  queryParams.keyword = str
+}
+
+function renderSelectData () {
+    // do something
+    console.log('渲染数据')
+}
+
+// 第一次搜索
+changeBook('xxx')
+// 第一次搜索过了两秒还没有返回数据
+setTimeout(() => {
+  // 就开始了第二次搜索
+  changeBook('yyy')
+}, 2000)
+```
+
+这段代码带来的结果就是：第一次请求的数据会晚于第二次请求到达，第一次请求的数据会把第二次请求的数据覆盖，这不是我们期待的效果。
+
+增加第三个副作用清理回调函数后，代码如下：
+
+```js
+// watch的第三个参数，可以注册一个过期回调，当这个副作用函数的执行过期时将标识修改为true
+// 换句话说，就是在watch内部每次检测到变化时，在副作用函数执行之前，会先执行通过onValidate注册的回调
+watch(book, async (newV, oldV, onInvalidate) => {
+  // 添加一个变量，标识上一次的请求是否过期
+  let expired = false // 默认是不过期的
+  onInvalidate(() => {
+    // 过期时，将expired设置为true
+    console.log('副作用函数已过期')
+    expired = true
+  })
+  // asyncTask(times[askNum++], askNum)
+  asyncTaskIsExpired(times[askNum++], askNum)
+    .then(() => {
+      if (!expired) {
+        console.log(`第${askNum}个任务执行完毕`)
+        renderSelectData()
+      }
+    })
+})
+```
+
+更新后执行流程就是： 第一次搜索数据一直没有返回，用户就进行第二次搜索，第二次搜索很快就响应了，客户端在处理第二次搜索响应的数据之前，先将上一次的`expired`修改为true，表示上一次请求已经过期，上一次请求即使成功（同时发起多个请求的时候），也不会执行后续操作了。
+
+前面为什么说是“上一次的`expired`”呢？因为第二次点击调用监听器的回调函数前，该回调函数（第三个参数）会先调用，该回调函数还处在第一次的监听事件中。
+
+#### 8. 侦听器调试
+
+`onTrack` 和 `onTrigger` 选项可用于调试侦听器的行为。
+
+- onTrack 将在响应式 property 或 ref 作为依赖项被追踪时被调用。
+- onTrigger 将在依赖项变更导致副作用被触发时被调用。
+
+这两个回调都将接收到一个包含有关所依赖项信息的调试器事件。 建议在以下回调中编写 debugger 语句来检查依赖关系：
+
+```javascript
+watchEffect(
+  () => {
+    /* 副作用 */
+  },
+  {
+    onTrigger(e) {
+      //debugger
+    }
+  }
+)
+```
+
+`onTrack` 和 `onTrigger` **只能在开发模式下工作**。
 
 ### 八、组件的生命周期
 
