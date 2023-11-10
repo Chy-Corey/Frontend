@@ -1203,7 +1203,7 @@ setTimeout(() => {
 增加第三个副作用清理回调函数后，代码如下：
 
 ```js
-// watch的第三个参数，可以注册一个过期回调，当这个副作用函数的执行过期时将标识修改为true
+// watch回调函数的第三个参数，可以注册一个过期回调，当这个副作用函数的执行过期时将标识修改为true
 // 换句话说，就是在watch内部每次检测到变化时，在副作用函数执行之前，会先执行通过onValidate注册的回调
 watch(book, async (newV, oldV, onInvalidate) => {
   // 添加一个变量，标识上一次的请求是否过期
@@ -1584,7 +1584,7 @@ import AwesomeIcon from './AwesomeIcon.vue'
 <template>
   <button>
   	<slot/>
-	</button>
+  </button>
 </template>
 ```
 
@@ -1679,6 +1679,34 @@ import AwesomeIcon from './AwesomeIcon.vue'
 
 注意这里的表达式和动态指令参数受相同的[语法限制](https://cn.vuejs.org/guide/essentials/template-syntax.html#directives)。
 
+##### 动态参数
+
+同样在指令参数上也可以使用一个 JavaScript 表达式，需要包含在一对方括号内：
+
+```vue
+<!--
+注意，参数表达式有一些约束，
+参见下面“动态参数值的限制”与“动态参数语法的限制”章节的解释
+-->
+<a v-bind:[attributeName]="url"> ... </a>
+
+<!-- 简写 -->
+<a :[attributeName]="url"> ... </a>
+```
+
+这里的 `attributeName` 会作为一个 JavaScript 表达式被动态执行，计算得到的值会被用作最终的参数。举例来说，如果你的组件实例有一个数据属性 `attributeName`，其值为 `"href"`，那么这个绑定就等价于 `v-bind:href`。
+
+相似地，你还可以将一个函数绑定到动态的事件名称上：
+
+```vue
+<a v-on:[eventName]="doSomething"> ... </a>
+
+<!-- 简写 -->
+<a @[eventName]="doSomething">
+```
+
+在此示例中，当 `eventName` 的值是 `"focus"` 时，`v-on:[eventName]` 就等价于 `v-on:focus`。
+
 ##### 作用域插槽
 
 由于插槽的内容是由父组件提供的，所以插槽无法访问子组件的内容。
@@ -1768,7 +1796,7 @@ const greetingMessage = 'hello'
 </template>
 ```
 
-注意：插槽的名字不一定需要一样，比如需要根据子组件的数据展示不固定数量的元素时：
+注意：插槽的名字不一定需要不一样，比如需要根据子组件的数据展示不固定数量的元素时：
 
 ```vue
 <!--父组件App-->
@@ -2156,11 +2184,11 @@ provide('read-only-count', readonly(count))
 //Bus.js
 class Bus {
     constructor() {
-        // list 用于存放订阅的事件以及事件对应的函数
+        // list 用于存放订阅的事件以及事件对应的函数，即调度中心
         this.list = {}
     }
     // 订阅
-    on(name, back) {
+    on(name, callback) {
         let fn = this.list[name] || []
         fn.push(callback)
         this.list[name] = fn
@@ -2174,7 +2202,31 @@ class Bus {
         })
     }
 }
+export default new Bus()
 ```
+
+派发者：
+
+```js
+let flag = false
+const emitB = () => {
+    flag = !flag
+    Bus.emit('on-click', flag)
+    // 这里派发者派发了一个 on-click 事件，每次调用 emitB 都会发布这个事件
+}
+```
+
+订阅者：
+
+```js
+let Flag = ref(false)
+Bus.on('on-click', (flag) => {
+    Flag.value = flag
+})
+// 这里订阅者订阅了 on-click 事件，每次事件发布时，回调函数会被调用，这样就修改了订阅者的数据
+```
+
+
 
 注意这里的订阅函数 `on` 在 `list` 中存放了一个回调函数，这个回调函数调用了订阅者的数据，当发布者调用了 `emit` 后，出发了回调函数，订阅者的数据发生改变，从而完成了发布订阅。
 
