@@ -38,8 +38,9 @@
 #### Task
 
 - [ ] 继续复习完善 vue3
-- [ ] JS 函数方法，比如 valueOf ，apply 等，并找几个例子练习
+- [x] JS 函数方法，比如 valueOf ，apply 等，并找几个例子练习
 - [ ] 看2个CSS设计实例
 
 #### Completion
 
+- 复习JS，对象方法

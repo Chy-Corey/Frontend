@@ -2220,7 +2220,7 @@ class Bus {
                 }
             }
         }
-        re
+        return true
     }
 }
 export default new Bus()
