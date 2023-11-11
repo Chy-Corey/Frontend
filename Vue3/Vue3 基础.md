@@ -2201,6 +2201,27 @@ class Bus {
       		// 这里的 this 指向 Bus 对象，如果用不到可以为 null
         })
     }
+    // 取消订阅
+    off(name, callback) {
+        let callbackList = this.list[name]
+        if (!callbackList) return false
+        if (!callback) {
+            // 如果没有传 callback 的话，就会将 name 值对应缓存列表中的 callback 都清空
+            callbackList && (callbackList.length = 0)
+        } else {
+            // 若有 callback，遍历缓存列表，看看传入的 callback 与哪个函数相同
+            // 如果相同就直接从缓存列表中删掉即可
+            let cb;
+            for (let i = 0, cbLen = callbackList.length; i < cbLen; i++) {
+                cb = callbackList[i];
+                if (cb === callback) {
+                    callbackList.splice(i, 1);
+                    break
+                }
+            }
+        }
+        re
+    }
 }
 export default new Bus()
 ```
@@ -2226,9 +2247,7 @@ Bus.on('on-click', (flag) => {
 // 这里订阅者订阅了 on-click 事件，每次事件发布时，回调函数会被调用，这样就修改了订阅者的数据
 ```
 
-
-
-注意这里的订阅函数 `on` 在 `list` 中存放了一个回调函数，这个回调函数调用了订阅者的数据，当发布者调用了 `emit` 后，出发了回调函数，订阅者的数据发生改变，从而完成了发布订阅。
+注意这里的订阅函数 `on` 在 `list` 中存放了一个回调函数，这个回调函数调用了**订阅者的数据**，当发布者调用了 `emit` 后，触发了回调函数，订阅者的数据发生改变，从而完成了发布订阅。
 
 #### 2. Mitt
 
