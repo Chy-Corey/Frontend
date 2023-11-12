@@ -52,9 +52,24 @@
 #### Task
 
 - [x] JS 对象方法
-- [ ] 看3个CSS设计实例
+- [x] 看3个CSS设计实例
 - [x] 继续复习完善 vue3
 
 #### Completion
 
-- 
+- vue3 基础复习完毕，复习了全局 api
+- JS 对象方法学习到了 Symbol ，明天学习 Map，Array等
+- CSS 设计看了一个，需要新建一个 vue 项目，通过路由跳转到不同的 css 设计界面
+
+
+
+### 2023/11/13
+
+#### Task
+
+- [ ] JS 对象方法
+- [ ] vue3 router & pinia
+- [ ] css设计，在 vue 项目内各界面实现练习
+
+#### Completion
+

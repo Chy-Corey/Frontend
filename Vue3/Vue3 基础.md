@@ -2867,3 +2867,9 @@ Mouse position is at: {{ mouse.x }}, {{ mouse.y }}
 
 #### 2. 自定义指令
 
+//
+
+#### 3. 插件
+
+//
+
