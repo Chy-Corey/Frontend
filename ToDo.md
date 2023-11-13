@@ -67,9 +67,21 @@
 
 #### Task
 
-- [ ] JS 对象方法
-- [ ] vue3 router & pinia
+- [x] JS 对象方法
+- [x] vue3 router & pinia
 - [ ] css设计，在 vue 项目内各界面实现练习
 
 #### Completion
 
+- 对象方法完毕，Set，Map
+- router 基础完毕
+- css 还没开始
+
+
+
+### 2023/11/14
+
+#### Task
+
+- [ ] css设计，在 vue 项目内各界面实现练习
+- [ ] router 进阶

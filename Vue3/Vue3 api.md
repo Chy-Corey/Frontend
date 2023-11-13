@@ -139,3 +139,29 @@ console.log(app.config)
     // `trace` 是组件层级结构的追踪
   }
   ```
+
+#### 6. app.config.globalProperties
+
+向任何组件实例中添加可全局访问的属性。
+
+```js
+// 在vue2中: 
+vue.prototype.$http = () => {}
+// 在vue3中: 
+app.config.globalproperties.$http = () => {}
+```
+
+```js
+//在main.js中创建实例
+import { createApp } from 'vue'
+import App from './App.vue'
+const app = createApp(App);
+//挂载方法到实例上
+app.config.globalProperties.$axios = axios
+
+//全局调用
+import { getCurrentInstance } from "vue";
+const { proxy }: any = getCurrentInstance();
+proxy.$axios()
+```
+
