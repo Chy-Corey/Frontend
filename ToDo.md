@@ -83,5 +83,10 @@
 
 #### Task
 
-- [ ] css设计，在 vue 项目内各界面实现练习
-- [ ] router 进阶
+- [x] css设计，在 vue 项目内各界面实现练习
+- [x] router 进阶
+
+#### Completion
+
+- router 进阶完成，需要看课程深入理解
+- css-collection 搭建完成
