@@ -1,8 +1,22 @@
 <template>
   <v-app id="inspire">
-    <v-navigation-drawer model-value class="pt-4" color="grey-lighten-3" rail>
-      <v-avatar v-for="n in 6" :key="n" :color="`grey-${n === 1 ? 'darken' : 'lighten'}-1`" :size="n === 1 ? 36 : 20"
-        class="d-block text-center mx-auto mb-9"></v-avatar>
+    <v-navigation-drawer model-value class="pt-4" color="grey-lighten-3" rail expand-on-hover dense>
+      <v-list>
+        <v-list-item prepend-avatar="/avetor.jpg" title="Hongyu"
+          subtitle="">
+          <template v-slot:append>
+            <v-btn size="small" variant="text" icon="mdi-menu-down" @click="listShow = !listShow"></v-btn>
+          </template>
+        </v-list-item>
+        <v-list-item v-show="listShow" title="E-mail: " subtitle="chy.yubao@gmail.com" prepend-icon="null">
+
+        </v-list-item>
+      </v-list>
+      <v-divider></v-divider>
+      <v-list nav>
+        <v-list-item v-for="item in nav.listItem" :key="item.name" :prepend-icon="item.icon" :title="item.name"
+          :subtitle="item.subName"></v-list-item>
+      </v-list>
     </v-navigation-drawer>
 
     <v-main>
@@ -12,5 +26,8 @@
 </template>
 
 <script setup>
-//
+import navList from "@/jsData/App/data.js"
+import { ref } from "vue";
+const nav = ref(navList)
+const listShow = ref(false)
 </script>
