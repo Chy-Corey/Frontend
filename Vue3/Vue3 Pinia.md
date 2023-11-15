@@ -191,7 +191,214 @@ const { increment } = store
 
 
 
-### 三、Getter
+### 三、State
+
+在大多数情况下，state 都是你的 store 的核心。人们通常会先定义能代表他们 APP 的 state。在 Pinia 中，state 被定义为一个返回初始状态的函数。这使得 Pinia 可以同时支持服务端和客户端。
+
+```js
+import { defineStore } from 'pinia'
+
+const useStore = defineStore('storeId', {
+  // 为了完整类型推理，推荐使用箭头函数
+  state: () => {
+    return {
+      // 所有这些属性都将自动推断出它们的类型
+      count: 0,
+      name: 'Eduardo',
+      isAdmin: true,
+      items: [],
+      hasChanged: true,
+    }
+  },
+})
+```
+
+#### 1. 访问 `state`
+
+默认情况下，你可以通过 `store` 实例访问 state，直接对其进行读写。
+
+```js
+const store = useStore()
+
+store.count++
+```
+
+#### 2. 重置 state
+
+使用[选项式 API](https://pinia.vuejs.org/zh/core-concepts/#option-stores) 时，你可以通过调用 store 的 `$reset()` 方法将 state 重置为初始值。
+
+```js
+const store = useStore()
+
+store.$reset()
+```
+
+在 `$reset()` 内部，会调用 `state()` 函数来创建一个新的状态对象，并用它替换当前状态。
+
+在 [Setup Stores](https://pinia.vuejs.org/core-concepts/#setup-stores) 中，您需要创建自己的 `$reset()` 方法：
+
+```ts
+export const useCounterStore = defineStore('counter', () => {
+  const count = ref(0)
+
+  function $reset() {
+    count.value = 0
+  }
+
+  return { count, $reset }
+})
+```
+
+#### 3. 使用选项式 API 的用法
+
+在下面的例子中，你可以假设相关 store 已经创建了：
+
+```js
+// 示例文件路径：
+// ./src/stores/counter.js
+
+import { defineStore } from 'pinia'
+
+const useCounterStore = defineStore('counter', {
+  state: () => ({
+    count: 0,
+  }),
+})
+```
+
+如果你不能使用组合式 API，但你可以使用 `computed`，`methods`，...，那你可以使用 `mapState()` 辅助函数将 state 属性映射为只读的计算属性：
+
+```js
+import { mapState } from 'pinia'
+import { useCounterStore } from '../stores/counter'
+
+export default {
+  computed: {
+    // 可以访问组件中的 this.count
+    // 与从 store.count 中读取的数据相同
+    ...mapState(useCounterStore, ['count'])
+    // 与上述相同，但将其注册为 this.myOwnName
+    ...mapState(useCounterStore, {
+      myOwnName: 'count',
+      // 你也可以写一个函数来获得对 store 的访问权
+      double: store => store.count * 2,
+      // 它可以访问 `this`，但它没有标注类型...
+      magicValue(store) {
+        return store.someGetter + this.count + this.double
+      },
+    }),
+  },
+}
+```
+
+##### 可修改的 state
+
+如果你想修改这些 state 属性 (例如，如果你有一个表单)，你可以使用 `mapWritableState()` 作为代替。但注意你不能像 `mapState()` 那样传递一个函数：
+
+```js
+import { mapWritableState } from 'pinia'
+import { useCounterStore } from '../stores/counter'
+
+export default {
+  computed: {
+    // 可以访问组件中的 this.count，并允许设置它。
+    // this.count++
+    // 与从 store.count 中读取的数据相同
+    ...mapWritableState(useCounterStore, ['count'])
+    // 与上述相同，但将其注册为 this.myOwnName
+    ...mapWritableState(useCounterStore, {
+      myOwnName: 'count',
+    }),
+  },
+}
+```
+
+> 对于像数组这样的集合，你并不一定需要使用 `mapWritableState()`，`mapState()` 也允许你调用集合上的方法，除非你想用 `cartItems = []` 替换整个数组。
+
+#### 4. 变更 state
+
+除了用 `store.count++` 直接改变 store，你还可以调用 `$patch` 方法。它允许你用一个 `state` 的补丁对象在同一时间更改多个属性：
+
+```js
+store.$patch({
+  count: store.count + 1,
+  age: 120,
+  name: 'DIO',
+})
+```
+
+不过，用这种语法的话，有些变更真的很难实现或者很耗时：任何集合的修改（例如，向数组中添加、移除一个元素或是做 `splice` 操作）都需要你创建一个新的集合。因此，`$patch` 方法也接受一个函数来组合这种难以用补丁对象实现的变更。
+
+```js
+store.$patch((state) => {
+  state.items.push({ name: 'shoes', quantity: 1 })
+  state.hasChanged = true
+})
+```
+
+两种变更 store 方法的主要区别是，`$patch()` 允许你将多个变更归入 devtools 的同一个条目中。同时请注意，**直接修改 `state`，`$patch()` 也会出现在 devtools 中**，而且可以进行 time travel (在 Vue 3 中还没有)。
+
+#### 5. 替换 `state`
+
+你**不能完全替换掉** store 的 state，因为那样会破坏其响应性。但是，你可以 *patch* 它。
+
+```js
+// 这实际上并没有替换`$state`
+store.$state = { count: 24 }
+// 在它内部调用 `$patch()`：
+store.$patch({ count: 24 })
+```
+
+你也可以通过变更 `pinia` 实例的 `state` 来设置整个应用的初始 state。这常用于 [SSR 中的激活过程](https://pinia.vuejs.org/zh/ssr/#state-hydration)。
+
+```js
+pinia.state.value = {}
+```
+
+#### 6. 订阅 state
+
+类似于 Vuex 的 [subscribe 方法](https://vuex.vuejs.org/zh/api/index.html#subscribe)，你可以通过 store 的 `$subscribe()` 方法侦听 state 及其变化。比起普通的 `watch()`，使用 `$subscribe()` 的好处是 *subscriptions* 在 *patch* 后只触发一次 (例如，当使用上面的函数版本时)。
+
+```js
+cartStore.$subscribe((mutation, state) => {
+  // import { MutationType } from 'pinia'
+  mutation.type // 'direct' | 'patch object' | 'patch function'
+  // 和 cartStore.$id 一样
+  mutation.storeId // 'cart'
+  // 只有 mutation.type === 'patch object'的情况下才可用
+  mutation.payload // 传递给 cartStore.$patch() 的补丁对象。
+
+  // 每当状态发生变化时，将整个 state 持久化到本地存储。
+  localStorage.setItem('cart', JSON.stringify(state))
+})
+```
+
+默认情况下，*state subscription* 会被绑定到添加它们的组件上 (如果 store 在组件的 `setup()` 里面)。这意味着，当该组件被卸载时，它们将被自动删除。如果你想在组件卸载后依旧保留它们，请将 `{ detached: true }` 作为第二个参数，以将 *state subscription* 从当前组件中*分离*：
+
+```vue
+<script setup>
+const someStore = useSomeStore()
+// 此订阅器即便在组件卸载之后仍会被保留
+someStore.$subscribe(callback, { detached: true })
+</script>
+```
+
+> 你可以在 `pinia` 实例上使用 `watch()` 函数侦听整个 state。
+
+```js
+watch(
+  pinia.state,
+  (state) => {
+    // 每当状态发生变化时，将整个 state 持久化到本地存储。
+    localStorage.setItem('piniaState', JSON.stringify(state))
+  },
+  { deep: true }
+)
+```
+
+
+
+### 四、Getter
 
 Getter 完全等同于 store 的 state 的[计算值](https://cn.vuejs.org/guide/essentials/computed.html)。可以通过 `defineStore()` 中的 `getters` 属性来定义它们。**推荐**使用箭头函数，并且它将接收 `state` 作为第一个参数：
 
@@ -617,3 +824,236 @@ const someStore = useSomeStore()
 someStore.$onAction(callback, true)
 </script>
 ```
+
+
+
+### 五、插件
+
+由于有了底层 API 的支持，Pinia store 现在完全支持扩展。以下是你可以扩展的内容：
+
+- 为 store 添加新的属性
+- 定义 store 时增加新的选项
+- 为 store 增加新的方法
+- 包装现有的方法
+- 改变甚至取消 action
+- 实现副作用，如[本地存储](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+- **仅**应用插件于特定 store
+
+插件是通过 `pinia.use()` 添加到 pinia 实例的。最简单的例子是通过返回一个对象将一个静态属性添加到所有 store。
+
+```js
+import { createPinia } from 'pinia'
+
+// 创建的每个 store 中都会添加一个名为 `secret` 的属性。
+// 在安装此插件后，插件可以保存在不同的文件中
+function SecretPiniaPlugin() {
+  return { secret: 'the cake is a lie' }
+}
+
+const pinia = createPinia()
+// 将该插件交给 Pinia
+pinia.use(SecretPiniaPlugin)
+
+// 在另一个文件中
+const store = useStore()
+store.secret // 'the cake is a lie'
+```
+
+这对添加全局对象很有用，如路由器、modal 或 toast 管理器。
+
+#### 1. 插件函数
+
+Pinia 插件是一个函数，可以选择性地返回要添加到 store 的属性。它接收一个可选参数，即 *context*。
+
+```js
+export function myPiniaPlugin(context) {
+  context.pinia // 用 `createPinia()` 创建的 pinia。 
+  context.app // 用 `createApp()` 创建的当前应用(仅 Vue 3)。
+  context.store // 该插件想扩展的 store
+  context.options // 定义传给 `defineStore()` 的 store 的可选对象。
+  // ...
+}
+```
+
+然后用 `pinia.use()` 将这个函数传给 `pinia`：
+
+```js
+pinia.use(myPiniaPlugin)
+```
+
+插件只会应用于**在 `pinia` 传递给应用后**创建的 store，否则它们不会生效。
+
+#### 2. 扩展 Store
+
+你可以直接通过在一个插件中返回包含特定属性的对象来为每个 store 都添加上特定属性：
+
+```js
+pinia.use(() => ({ hello: 'world' }))
+```
+
+你也可以直接在 `store` 上设置该属性，但**可以的话，请使用返回对象的方法，这样它们就能被 devtools 自动追踪到**：
+
+```js
+pinia.use(({ store }) => {
+  store.hello = 'world'
+})
+```
+
+任何由插件返回的属性都会被 devtools 自动追踪，所以如果你想在 devtools 中调试 `hello` 属性，为了使 devtools 能追踪到 `hello`，请确保**在 dev 模式下**将其添加到 `store._customProperties` 中：
+
+```js
+// 上文示例
+pinia.use(({ store }) => {
+  store.hello = 'world'
+  // 确保你的构建工具能处理这个问题，webpack 和 vite 在默认情况下应该能处理。
+  if (process.env.NODE_ENV === 'development') {
+    // 添加你在 store 中设置的键值
+    store._customProperties.add('hello')
+  }
+})
+```
+
+值得注意的是，每个 store 都被 [`reactive`](https://cn.vuejs.org/api/reactivity-core.html#reactive)包装过，所以可以自动解包任何它所包含的 Ref(`ref()`、`computed()`...)。
+
+```js
+const sharedRef = ref('shared')
+pinia.use(({ store }) => {
+  // 每个 store 都有单独的 `hello` 属性
+  store.hello = ref('secret')
+  // 它会被自动解包
+  store.hello // 'secret'
+
+  // 所有的 store 都在共享 `shared` 属性的值
+  store.shared = sharedRef
+  store.shared // 'shared'
+})
+```
+
+这就是在没有 `.value` 的情况下你依旧可以访问所有计算属性的原因，也是它们为什么是响应式的原因。
+
+#### 3. 添加新的 state
+
+如果你想给 store 添加新的 state 属性或者在服务端渲染的激活过程中使用的属性，**你必须同时在两个地方添加它**。
+
+- 在 `store` 上，然后你才可以用 `store.myState` 访问它。
+- 在 `store.$state` 上，然后你才可以在 devtools 中使用它，并且，**在 SSR 时被正确序列化(serialized)**。
+
+除此之外，你肯定也会使用 `ref()`(或其他响应式 API)，以便在不同的读取中共享相同的值：
+
+```js
+import { toRef, ref } from 'vue'
+
+pinia.use(({ store }) => {
+  // 为了正确地处理 SSR，我们需要确保我们没有重写任何一个 
+  // 现有的值
+  if (!Object.prototype.hasOwnProperty.call(store.$state, 'hasError')) {
+    // 在插件中定义 hasError，因此每个 store 都有各自的
+    // hasError 状态
+    const hasError = ref(false)
+    // 在 `$state` 上设置变量，允许它在 SSR 期间被序列化。
+    store.$state.hasError = hasError
+  }
+  // 我们需要将 ref 从 state 转移到 store
+  // 这样的话,两种方式：store.hasError 和 store.$state.hasError 都可以访问
+  // 并且共享的是同一个变量
+  // 查看 https://cn.vuejs.org/api/reactivity-utilities.html#toref
+  store.hasError = toRef(store.$state, 'hasError')
+
+  // 在这种情况下，最好不要返回 `hasError`
+  // 因为它将被显示在 devtools 的 `state` 部分
+  // 如果我们返回它，devtools 将显示两次。
+})
+```
+
+需要注意的是，在一个插件中， state 变更或添加(包括调用 `store.$patch()`)都是发生在 store 被激活之前，**因此不会触发任何订阅函数**。
+
+#### 4. 添加新的外部属性
+
+当添加外部属性、第三方库的类实例或非响应式的简单值时，你应该先用 `markRaw()` 来包装一下它，再将它传给 pinia。下面是一个在每个 store 中添加路由器的例子：
+
+```js
+import { markRaw } from 'vue'
+// 根据你的路由器的位置来调整
+import { router } from './router'
+
+pinia.use(({ store }) => {
+  store.router = markRaw(router)
+})
+```
+
+#### 5. 在插件中调用 `$subscribe`
+
+你也可以在插件中使用 [store.$subscribe](https://pinia.vuejs.org/zh/core-concepts/state.html#subscribing-to-the-state) 和 [store.$onAction](https://pinia.vuejs.org/zh/core-concepts/actions.html#subscribing-to-actions) 。
+
+```ts
+pinia.use(({ store }) => {
+  store.$subscribe(() => {
+    // 响应 store 变化
+  })
+  store.$onAction(() => {
+    // 响应 store actions
+  })
+})
+```
+
+#### 6. 添加新的选项
+
+在定义 store 时，可以创建新的选项，以便在插件中使用它们。例如，你可以创建一个 `debounce` 选项，允许你让任何 action 实现防抖。
+
+```js
+defineStore('search', {
+  actions: {
+    searchContacts() {
+      // ...
+    },
+  },
+
+  // 这将在后面被一个插件读取
+  debounce: {
+    // 让 action searchContacts 防抖 300ms
+    searchContacts: 300,
+  },
+})
+```
+
+然后，该插件可以读取该选项来包装 action，并替换原始 action：
+
+```js
+// 使用任意防抖库
+import debounce from 'lodash/debounce'
+
+pinia.use(({ options, store }) => {
+  if (options.debounce) {
+    // 我们正在用新的 action 来覆盖这些 action
+    return Object.keys(options.debounce).reduce((debouncedActions, action) => {
+      debouncedActions[action] = debounce(
+        store[action],
+        options.debounce[action]
+      )
+      return debouncedActions
+    }, {})
+  }
+})
+```
+
+注意，在使用 setup 语法时，自定义选项作为第 3 个参数传递：
+
+```js
+defineStore(
+  'search',
+  () => {
+    // ...
+  },
+  {
+    // 这将在后面被一个插件读取
+    debounce: {
+      // 让 action searchContacts 防抖 300ms
+      searchContacts: 300,
+    },
+  }
+)
+```
+
+#### 案例
+
+[Vue + vite + Ts + pinia + 实战 + 源码 + electron](https://www.bilibili.com/video/BV1dS4y1y7vd/?p=67&share_source=copy_web&vd_source=3f555cf5da7349f4a8a9fdc0df4cd7af)
