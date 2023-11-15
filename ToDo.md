@@ -99,7 +99,7 @@
 
 - [ ] css设计，在 vue 项目内各界面实现练习
 - [ ] pinia
-- [ ] RFC 学习 [使用 RFC 流程管理项目 :: Rectcircle Blog](https://www.rectcircle.cn/series/software-project-management/use-rfc-manage/#:~:text=开源项目 RFC 的基本流程 1 确认如下问题 查看所有历史 RFC，确认待创建的 RFC,同时 该 RFC 的 PR 将合入 RFC 仓库)
+- [x] RFC 学习 [使用 RFC 流程管理项目 :: Rectcircle Blog](https://www.rectcircle.cn/series/software-project-management/use-rfc-manage/#:~:text=开源项目 RFC 的基本流程 1 确认如下问题 查看所有历史 RFC，确认待创建的 RFC,同时 该 RFC 的 PR 将合入 RFC 仓库)
 - [ ] 如何写注释（鼠标hover能够显示注释解释）
 
 #### Completion
