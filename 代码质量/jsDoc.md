@@ -16,11 +16,11 @@ jsDoc注释通常应该放在代码被记录之前。为了被jsDoc解析器识�
 
 对上面的函数使用 jsDoc：
 
-<img src="E:\Note\fromTypora\Frontend\代码质量\image\img2.jpg" alt="img2" style="zoom:67%;" />
+<img src=".\image\img2.jpg" alt="img2" style="zoom:67%;" />
 
 可以看到 vscode 的提醒都符合参数的数据类型 `string` ，并且鼠标悬停到函数上还能看到对函数的描述：
 
-<img src="E:\Note\fromTypora\Frontend\代码质量\image\img3.jpg" alt="img3" style="zoom:67%;" />
+<img src=".\image\img3.jpg" alt="img3" style="zoom:67%;" />
 
 这就是 jsDoc 的魅力之处。
 
@@ -30,7 +30,7 @@ jsDoc注释通常应该放在代码被记录之前。为了被jsDoc解析器识�
 
 #### 1. 向代码中添加文档注释
 
-JSDoc 的目的是记录 JavaScript 应用程序或库的 API。假设您想要记录诸如模块、名称空间、类、方法、方法参数等内容。
+jsDoc 的目的是记录 JavaScript 应用程序或库的 API。假设您想要记录诸如模块、名称空间、类、方法、方法参数等内容。
 
 JSDoc注释通常应该放在记录代码之前。为了被 JSDoc 解析器识别，每个注释必须以 `/**` 序列开头。以 `/*`、`/***`开头或超过3颗星的注释将被忽略。这个特性用于控制解析注释块的功能。
 
@@ -57,7 +57,7 @@ function Book(title, author) {
 
 使用标签添加更多的信息。
 
-```jstext
+```js
 /**
  * Represents a book.
  * @constructor
@@ -84,6 +84,63 @@ jsdoc book.js
 
 
 
-###
+### 三、注释标签
 
-[JSDoc 3中使用名称路径 | JSDoc中文文档 | JSDoc中文网](https://www.jsdoc.com.cn/about-namepaths)
+JSDoc 是一个根据 JavaScript 文件中注释信息，生成 JavaScript 应用程序或模块的API文档的工具。你可以使用 JSDoc 标记如：**命名空间**，**类**，**方法**，**方法参数**等。
+
+注释符可以告诉 jsDoc 是注释的哪种变量。
+
+#### 1. @constructor 构造函数声明注释
+
+@constructor明确一个函数是某个类的构造函数。
+
+#### 2. @param 参数注释
+
+我们通常会使用@param来表示函数、类的方法的参数，@param是JSDoc中最常用的注释标签。参数标签可表示一个参数的**参数名**、**参数类型**和**参数描述**的注释。如下所示：
+
+```js
+/**
+* @param {String} wording 需要说的句子
+*/
+functionsay(wording){
+    console.log(wording);
+}
+```
+
+#### 3. @return 返回值注释
+
+@return表示一个函数的返回值，如果函数没有显示指定返回值可不写。如下所示：
+
+```js
+/**
+* @return {Number} 返回值描述
+*/
+```
+
+#### 4. @example 示例注释
+
+@example通常用于表示示例代码,通常示例的代码会另起一行编写，如下所示：
+
+```js
+/**
+* @example
+* multiply(3, 2);
+*/
+```
+
+#### 5. 其他常用注释
+
+@overview对当前代码文件的描述。
+
+@copyright代码的版权信息。
+
+@author  []代码的作者信息。
+
+@version当前代码的版本。
+
+
+
+### 
+
+
+

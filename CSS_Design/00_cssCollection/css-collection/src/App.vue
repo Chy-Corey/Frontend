@@ -5,7 +5,7 @@
         <v-list-item title="Hongyu" subtitle="">
           <template v-slot:prepend>
             <v-avatar @click.prevent="routeToHome" class="avatar">
-              <v-img src="/avetor.jpg" title="toHome"></v-img>
+              <v-img src="/avatar.jpg" title="toHome"></v-img>
             </v-avatar>
           </template>
           <template v-slot:append>
@@ -44,6 +44,7 @@ const routeToHome = function () {
     router.push("/")
   }
 }
+
 </script>
 
 <style scoped>
