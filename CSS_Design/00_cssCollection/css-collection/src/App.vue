@@ -9,7 +9,8 @@
             </v-avatar>
           </template>
           <template v-slot:append>
-            <v-btn size="small" title="E-mail" variant="text" icon="mdi-menu-down" @click.prevent="listShow = !listShow"></v-btn>
+            <v-btn size="small" title="E-mail" variant="text" icon="mdi-menu-down"
+              @click.prevent="listShow = !listShow"></v-btn>
           </template>
         </v-list-item>
         <v-list-item v-show="listShow" title="E-mail: " subtitle="chy.yubao@gmail.com" prepend-icon="null">
@@ -19,7 +20,7 @@
       <v-divider></v-divider>
       <v-list nav>
         <v-list-item v-for="item in nav.listItem" :key="item.name" :prepend-icon="item.icon" :title="item.name"
-          :subtitle="item.subName"></v-list-item>
+          :subtitle="item.subName" link></v-list-item>
       </v-list>
     </v-navigation-drawer>
 
@@ -46,7 +47,7 @@ const routeToHome = function () {
 </script>
 
 <style scoped>
-  .avatar {
-    cursor: pointer;
-  }
+.avatar {
+  cursor: pointer;
+}
 </style>
