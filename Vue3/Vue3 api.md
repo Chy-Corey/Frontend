@@ -351,3 +351,31 @@ defineExpose({
 </script>
 ```
 
+#### 在父组件中使用
+
+子组件中暴露以后，如果要在父组件中调用，一定要在挂在以后，因为只有等子组件挂载了，才能拿到子组件暴露出的属性：
+
+```js
+<template>
+  <Child ref="child" />
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import Child from './Child.vue'
+
+const child = ref(null)
+
+onMounted(() => {
+  // child.value 是 <Child /> 组件的实例
+  child.value.a	// 假设暴露了属性 a
+})
+</script>
+```
+
+
+
+### 2. 响应式核心
+
+#### `ref()`
+
